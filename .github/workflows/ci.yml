@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ── Compile, run the JUnit suite against a real Postgres, package the WAR ──
+  build-test:
+    name: Build & test (Maven, JDK 17)
+    runs-on: ubuntu-latest
+
+    # The tests talk to a real PostgreSQL (the DAOs are literal JDBC). Spin one
+    # up as a service container, health-gated so the build waits for it.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: tracker
+          POSTGRES_USER: tracker
+          POSTGRES_PASSWORD: tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tracker -d tracker"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/tracker
+      DB_USER: tracker
+      DB_PASSWORD: tracker
+      PGPASSWORD: tracker
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # The DB owns its schema (the app never creates tables), so load the same
+      # scripts the container's docker-entrypoint-initdb.d would, in order.
+      - name: Load schema, seed and read-only role
+        run: |
+          psql -h localhost -U tracker -d tracker -v ON_ERROR_STOP=1 -f src/main/resources/db/schema.sql
+          psql -h localhost -U tracker -d tracker -v ON_ERROR_STOP=1 -f src/main/resources/db/seed.sql
+          psql -h localhost -U tracker -d tracker -v ON_ERROR_STOP=1 -f src/main/resources/db/oracle-ro.sql
+
+      - name: Build, test and package
+        run: mvn -B verify
+
+      - name: Upload WAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: task-tracker-war
+          path: target/task-tracker.war
+          if-no-files-found: error
+
+  # ── Prove the app builds fully inside a container (no host JDK/Maven) ──
+  # This is the same multi-stage Dockerfile the deployment uses; building it in
+  # CI guarantees the containerized build path never rots.
+  container-build:
+    name: Containerized image build (podman)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image with podman
+        run: podman build -t task-tracker:dev .

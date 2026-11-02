@@ -1,0 +1,85 @@
+# task-tracker deployment for `podman kube play` (converted from the old
+# docker-compose.yml). Two containers — the app and its PostgreSQL — in ONE Pod,
+# so the app reaches the DB over localhost (compose used the service name `db`;
+# in a shared Pod network namespace that becomes localhost:5432).
+#
+#   Build the app image first (nothing installed on the host — see README):
+#     podman build -t task-tracker:dev .
+#
+#   Bring the stack up / take it down:
+#     podman kube play --configmap deploy/tracker-db-initdb-configmap.yaml deploy/task-tracker.yaml
+#     podman kube down deploy/task-tracker.yaml
+#
+#   App:      http://localhost:25173/
+#   Postgres: localhost:25432  (db `tracker`, user `tracker`, pass `tracker`)
+#
+# There is no `depends_on` in kube play; ordering is handled by the app itself —
+# BootstrapListener/Database.awaitReady() retries the DB for ~30s on startup.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: task-tracker
+  labels:
+    app: task-tracker
+spec:
+  # Postgres data is a tmpfs in the old compose; if initdb ever fails the Pod
+  # should restart and re-seed rather than sit half-initialized.
+  restartPolicy: OnFailure
+  containers:
+    # ── PostgreSQL ──
+    - name: db
+      image: docker.io/library/postgres:16
+      env:
+        - name: POSTGRES_DB
+          value: tracker
+        - name: POSTGRES_USER
+          value: tracker
+        - name: POSTGRES_PASSWORD
+          value: tracker
+        # Keep PGDATA outside the image's declared VOLUME so our in-memory
+        # emptyDir can own it (mirrors the compose tmpfs + PGDATA trick).
+        - name: PGDATA
+          value: /pgdata
+      ports:
+        # host 25432 -> container 5432
+        - containerPort: 5432
+          hostPort: 25432
+      volumeMounts:
+        - name: initdb
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        - name: pgdata
+          mountPath: /pgdata
+      readinessProbe:
+        exec:
+          command: ["pg_isready", "-U", "tracker", "-d", "tracker"]
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 15
+
+    # ── the app (Tomcat 9, built from this repo's Dockerfile) ──
+    - name: app
+      image: localhost/task-tracker:dev
+      # Use the locally built image; do not try to pull it from a registry.
+      env:
+        - name: DB_URL
+          value: jdbc:postgresql://localhost:5432/tracker
+        - name: DB_USER
+          value: tracker
+        - name: DB_PASSWORD
+          value: tracker
+      ports:
+        # host 25173 -> container 8080
+        - containerPort: 8080
+          hostPort: 25173
+
+  volumes:
+    # schema.sql -> seed.sql -> oracle-ro.sql, loaded by postgres in name order.
+    - name: initdb
+      configMap:
+        name: tracker-db-initdb
+    # tmpfs equivalent: RAM-backed, wiped on every `kube play`, so initdb
+    # re-runs and re-seeds each time (no data persists across down/up).
+    - name: pgdata
+      emptyDir:
+        medium: Memory

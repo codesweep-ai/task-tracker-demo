@@ -1,0 +1,17 @@
+<%-- Shared masthead + top nav. Included by the authenticated pages. --%>
+<div class="masthead">
+  <div class="brand">Example<span class="tld">.com</span></div>
+  <div class="tagline">Project Tracker &mdash; Internal Tool</div>
+</div>
+<div class="topnav">
+  <span>
+    <a href="${pageContext.request.contextPath}/tasks">Tasks</a>
+    <a href="${pageContext.request.contextPath}/projects">Projects</a>
+    <a class="btn" href="${pageContext.request.contextPath}/tasks/form">+ New task</a>
+  </span>
+  <span class="user">
+    ${sessionScope.user.fullName} (${sessionScope.user.role})
+    &nbsp;|&nbsp;
+    <a href="${pageContext.request.contextPath}/logout">Logout</a>
+  </span>
+</div>

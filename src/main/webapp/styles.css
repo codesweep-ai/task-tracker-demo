@@ -1,0 +1,133 @@
+/* Old-school intranet styling, c. early 2000s. */
+
+body {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: #000;
+  background: #dfe3e8;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Masthead banner ── */
+.masthead {
+  background: #003366;
+  border-bottom: 3px solid #ff9900;
+  color: #fff;
+  padding: 12px 22px;
+}
+.masthead .brand {
+  font-size: 23px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.masthead .brand .tld { color: #ff9900; }
+.masthead .tagline {
+  font-size: 11px;
+  color: #b8c6d6;
+  margin-top: 3px;
+}
+
+/* ── Top navigation strip ── */
+.topnav {
+  background: #335c85;
+  padding: 7px 22px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topnav a { color: #fff; text-decoration: none; margin-right: 18px; }
+.topnav a:hover { text-decoration: underline; }
+.topnav .user { color: #cdd9e5; }
+.topnav .user a { margin-right: 0; }
+
+/* ── Content card ── */
+.content {
+  max-width: 980px;
+  margin: 18px auto;
+  background: #fff;
+  border: 1px solid #9aa7b4;
+  padding: 18px 24px 26px;
+}
+h1 {
+  font-size: 18px;
+  margin: 4px 0 18px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 7px;
+}
+
+/* ── Toolbars (the control rows above/below the grid) ── */
+.toolbar {
+  background: #eef1f4;
+  border: 1px solid #c3ccd5;
+  padding: 11px 14px;
+  margin: 16px 0;
+}
+.toolbar.below { text-align: right; }
+.toolbar label { font-weight: bold; margin-right: 8px; }
+
+/* ── Data grid ── */
+table.grid { border-collapse: collapse; width: 100%; margin: 16px 0; }
+table.grid th, table.grid td {
+  border: 1px solid #b8c0c8;
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+table.grid th {
+  background: #d6dde4;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+table.grid tr:nth-child(even) td { background: #f6f8fa; }
+.status { font-weight: bold; }
+
+/* ── Beveled, old-style buttons & inputs ── */
+button, input[type=submit] {
+  font-family: inherit;
+  font-size: 12px;
+  background: #ececec;
+  border: 1px solid;
+  border-color: #fff #888 #888 #fff;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+button:active, input[type=submit]:active { border-color: #888 #fff #fff #888; }
+a.btn {
+  display: inline-block;
+  padding: 3px 11px;
+  background: #335c85;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid;
+  border-color: #7a98b8 #1f3a57 #1f3a57 #7a98b8;
+}
+input[type=text], input[type=password], input[type=date], select, textarea {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 3px;
+  border: 1px solid #8899aa;
+}
+
+/* ── Forms ── */
+.formrow { margin: 0 0 14px; }
+.formrow label { display: block; font-weight: bold; margin-bottom: 4px; }
+.formrow input[type=text], .formrow select, .formrow textarea { width: 100%; box-sizing: border-box; }
+
+.error {
+  color: #900;
+  background: #fff0f0;
+  border: 1px solid #e0a0a0;
+  padding: 9px 11px;
+  margin: 14px 0;
+}
+
+.footer {
+  max-width: 980px;
+  margin: 6px auto 26px;
+  color: #5b6770;
+  font-size: 11px;
+  text-align: center;
+}
